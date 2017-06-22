@@ -1,7 +1,6 @@
 package app;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -78,7 +77,7 @@ public class UtilMethods {
 			}
 		} catch (SocketException e) {
 			e.printStackTrace();
-		}
+		}		
 		return null;
 
 	}
@@ -193,4 +192,16 @@ public class UtilMethods {
 		return retVal;
 	}
 	
+	public static String getLocalAddress() {
+		Properties prop = new Properties();
+
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+		InputStream input = classLoader.getResourceAsStream("config.properties");
+		try {
+			prop.load(input);
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+		return prop.getProperty("address");
+	}
 }

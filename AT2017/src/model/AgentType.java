@@ -7,20 +7,21 @@ public class AgentType implements Serializable{
 	/**
 	 * 
 	 */
+
 	private static final long serialVersionUID = -6281059676287693288L;
 
 	
 	private String name;
-	private String module;
+	//private String module;
 	
 	public AgentType(){
 		
 	}
 
-	public AgentType(String name, String module) {
+	public AgentType(String name) {
 		super();
 		this.name = name;
-		this.module = module;
+		//this.module = module;
 	}
 
 	public String getName() {
@@ -31,14 +32,14 @@ public class AgentType implements Serializable{
 		this.name = name;
 	}
 
-	public String getModule() {
+	/*public String getModule() {
 		return module;
 	}
 
 	public void setModule(String module) {
 		this.module = module;
 	}
-	
+	*/
 	
 	
 }

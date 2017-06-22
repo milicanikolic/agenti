@@ -4,8 +4,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -29,6 +34,7 @@ public class NodeManager implements Serializable{
 	private ArrayList<AgentCenter> nodes;
 	private AgentCenter current;
 	private AgentCenter master;
+	private Context ctx=null;;
 
 	public NodeManager() {
 		
@@ -42,17 +48,27 @@ public class NodeManager implements Serializable{
 		master = new AgentCenter(UtilMethods.getMasterAddress(), UtilMethods.getMasterPort(), UtilMethods.getMasterAlias());
 
 		nodes.add(master);
+		
+		try {
+			ctx=new InitialContext();
+		} catch (NamingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		System.out.println("MASTER " + master.getPort());
 		System.out.println("TRENUTNI " +  current.getPort());
 		if (!master.getPort().equals(current.getPort())) {
 			ResteasyClient client = new ResteasyClientBuilder().build();
 			System.out.println("razlicit od mastera, registruje se");
 			ResteasyWebTarget target = client
-					.target("http://" + master.getAddress() + ":" + master.getPort() + "/AT2017/rest/node/registerNode/"+current.getAddress()+"/"+ current.getPort()+"/"+current.getAlias());
+					.target("http://"+ UtilMethods.getLocalAddress() + ":" + master.getPort() + "/AT2017/rest/node/registerNode/"+current.getAddress()+"/"+ current.getPort()+"/"+current.getAlias());
 
 			Response response = target.request(MediaType.APPLICATION_JSON).get();
 
 			String ret = response.readEntity(String.class);
+			
+			System.out.println(ret);
 
 			ArrayList<AgentCenter> lista = new ArrayList<AgentCenter>();
 
@@ -76,13 +92,20 @@ public class NodeManager implements Serializable{
 			}
 
 			setNodes(lista);
-			
-			
-		
 
 		}
 	}
-/*
+	
+	public void deleteByAlias(String alias){
+		for(AgentCenter ac : nodes){
+			if(ac.getAlias().equals(alias)){
+				
+				nodes.remove(ac);
+				break;
+			}
+		}
+	}
+
 	@PreDestroy
 	public void unregister() {
 
@@ -93,63 +116,8 @@ public class NodeManager implements Serializable{
 			
 			Response response = target.request(MediaType.APPLICATION_JSON).put(Entity.entity(current, "application/json"));
 		}
-	}*/
-
-	
-	
-	
-	/*	@PostConstruct
-	public void start() {
-
-		System.out.println("usao u post construct");
-		currentNode = new AgentCenter(UtilMethods.getCurrentAddress(), UtilMethods.getCurrentName(), UtilMethods.getPort());
-		masterNode = new AgentCenter(UtilMethods.getMasterAddress(), UtilMethods.getMasterAlias(), UtilMethods.getMasterPort());
-		System.out.println("MASTER " + masterNode.getAddress()+masterNode.getAlias()+masterNode.getPort() );
-		System.out.println("TRENUTNI " + currentNode.getAddress()+currentNode.getAlias()+currentNode.getPort());
-		
-		allNodes.add(masterNode);
-
-		if (!masterNode.getPort().equals(currentNode.getPort())) {
-			ResteasyClient client = new ResteasyClientBuilder().build();
-			System.out.println("razliciti su i usao je u if");
-			ResteasyWebTarget target = client
-					.target("http://"+ masterNode.getAddress() + ":" + masterNode.getPort() + "/AT2017/rest/node/register");
-
-			Response response = target.request().post(Entity.entity(currentNode, "application/json"));
-			//String ret = response.readEntity(String.class);
-			System.out.println("vratio iz registera  " + response.getStatus());
-			
-			if(response.getStatus() >=200 && response.getStatus()<500) {
-				ResteasyClient clientUpdate = new ResteasyClientBuilder().build();
-				ResteasyWebTarget targetUpdate = clientUpdate
-						.target("http://"+masterNode.getAddress() + ":" + masterNode.getPort() + "/AT2017/rest/node/updateMaster");
-				System.out.println("restom gadjam update " + masterNode.getPort());
-				Response responseUpdate = targetUpdate.request().get();
-			}
-			else {
-				ResteasyClient client1 = new ResteasyClientBuilder().build();
-				System.out.println("razliciti su i usao je u if");
-				ResteasyWebTarget target1 = client1
-						.target("http://"+ masterNode.getAddress() + ":" + masterNode.getPort() + "/AT2017/rest/node/register");
-
-				Response response1 = target1.request().post(Entity.entity(currentNode, "application/json"));
-				if(response1.getStatus() >=200 && response1.getStatus()<500) {
-					ResteasyClient clientUpdate = new ResteasyClientBuilder().build();
-					ResteasyWebTarget targetUpdate = clientUpdate
-							.target("http://"+masterNode.getAddress() + ":" + masterNode.getPort() + "/AT2017/rest/node/updateMaster");
-					System.out.println("restom gadjam update " + masterNode.getPort());
-					Response responseUpdate = targetUpdate.request().get();
-				}
-				else {
-					return;
-				}
-			}
-
-			
-		}
 	}
-	*/
-	
+
 	
 	public ArrayList<AgentCenter> getNodes() {
 		return nodes;
@@ -174,5 +142,17 @@ public class NodeManager implements Serializable{
 	public void setMaster(AgentCenter master) {
 		this.master = master;
 	}
+
+
+	public Context getCtx() {
+		return ctx;
+	}
+
+
+	public void setCtx(Context ctx) {
+		this.ctx = ctx;
+	}
+	
+	
 
 }
